@@ -46,7 +46,7 @@
 
     /* Menü Button */
     .menu-btn {
-      position: absolute;
+      position: fixed;
       top: 18px;
       left: 18px;
       font-size: 28px;
@@ -265,7 +265,7 @@
 
   <!-- LOGO -->
   <h1 class="logo">
-    C<img src="coins/coin-o.png" class="logo-o">INFLIP
+    C<img src="coins/coin-o.png" class="logo-o" alt="Coin-O">INFLIP
   </h1>
 
   <!-- SIDE MENU -->
@@ -360,11 +360,11 @@
 
 </div>
 
-<!-- Soundeffekt (Datei später in /sounds/ hochladen) -->
+<!-- Soundeffekt (optional – Datei in /sounds/coin-flip.mp3 legen) -->
 <audio id="coinSound" src="sounds/coin-flip.mp3" preload="auto"></audio>
 
 <script>
-  // iOS erkennen für kleinen Backface-Fix
+  // iOS erkennen
   (function(){
     const ua = navigator.userAgent || navigator.vendor || window.opera;
     if (/iPad|iPhone|iPod/.test(ua)) {
@@ -376,7 +376,9 @@
   const menuBtn  = document.getElementById("menuBtn");
   const sideMenu = document.getElementById("sideMenu");
 
-  menuBtn.addEventListener("click", () => sideMenu.classList.toggle("open"));
+  if (menuBtn && sideMenu) {
+    menuBtn.addEventListener("click", () => sideMenu.classList.toggle("open"));
+  }
 
   /* Page Switcher */
   const pages = document.querySelectorAll(".page");
@@ -384,22 +386,125 @@
     item.addEventListener("click", () => {
       const target = item.getAttribute("data-page");
       pages.forEach(p => p.classList.remove("active"));
-      document.getElementById(`page-${target}`).classList.add("active");
+      const pageEl = document.getElementById(`page-${target}`);
+      if (pageEl) pageEl.classList.add("active");
       sideMenu.classList.remove("open");
     });
   });
 
   /* Flip-Setup */
-  const coin   = document.getElementById("coin");
-  const shadow = document.getElementById("coinShadow");
-  const result = document.getElementById("result");
+  const coin      = document.getElementById("coin");
+  const shadow    = document.getElementById("coinShadow");
+  const result    = document.getElementById("result");
   const coinSound = document.getElementById("coinSound");
 
-  let baseTurns = 0;
-  let isFlipping = false;
+  let baseTurns   = 0;
+  let isFlipping  = false;
 
-  let totalFlips = 0;
-  let headsCount = 0;
-  let tailsCount = 0;
+  let totalFlips  = 0;
+  let headsCount  = 0;
+  let tailsCount  = 0;
 
-  const statTotal = document.getElementById("stat
+  const statTotal = document.getElementById("stat-total");
+  const statHeads = document.getElementById("stat-heads");
+  const statTails = document.getElementById("stat-tails");
+  const resetStatsBtn = document.getElementById("resetStats");
+
+  function updateStats(){
+    if (statTotal) statTotal.textContent = totalFlips;
+    if (statHeads) statHeads.textContent = headsCount;
+    if (statTails) statTails.textContent = tailsCount;
+  }
+
+  function randBit(){
+    if (window.crypto?.getRandomValues){
+      const arr = new Uint32Array(1);
+      crypto.getRandomValues(arr);
+      return arr[0] & 1;
+    }
+    return Math.random() < 0.5 ? 0 : 1;
+  }
+
+  async function flip(){
+    if (isFlipping || !coin || !shadow || !result) return;
+    isFlipping = true;
+
+    const spins = 4 + Math.floor(Math.random()*4);
+    baseTurns  += spins;
+
+    const bit = randBit(); // 0 = Kopf, 1 = Zahl
+    const deg = baseTurns * 360 + (bit ? 180 : 0);
+
+    result.textContent = "…";
+
+    // Sound (falls Datei fehlt oder Browser blockt → einfach ignorieren)
+    if (coinSound) {
+      try {
+        coinSound.currentTime = 0;
+        coinSound.play();
+      } catch(e) {}
+    }
+
+    // Jump + Drehung
+    coin.style.animation  = "coinJump 1.2s ease-out forwards";
+    shadow.classList.add("small");
+    coin.style.transition = "transform 1.2s cubic-bezier(.2,.7,.2,1)";
+    coin.style.transform  = `rotateY(${deg}deg)`;
+
+    await new Promise(r=>setTimeout(r, 1200));
+
+    coin.style.animation = "";
+    shadow.classList.remove("small");
+
+    // Stats
+    totalFlips++;
+    if (bit === 0) headsCount++; else tailsCount++;
+    updateStats();
+
+    result.textContent = bit ? "Zahl" : "Kopf";
+    isFlipping = false;
+  }
+
+  const flipBtn = document.getElementById("flipBtn");
+  if (flipBtn) {
+    flipBtn.addEventListener("click", flip);
+  }
+
+  /* Reset Stats */
+  if (resetStatsBtn) {
+    resetStatsBtn.addEventListener("click", () => {
+      totalFlips = 0;
+      headsCount = 0;
+      tailsCount = 0;
+      updateStats();
+      if (result) result.textContent = "Stats zurückgesetzt";
+    });
+  }
+
+  /* Customize – Coin-Wechsel mit Glow */
+  document.querySelectorAll(".coin-option").forEach(opt => {
+    opt.addEventListener("click", () => {
+      const headImg = opt.getAttribute("data-head");
+      const tailImg = opt.getAttribute("data-tail");
+
+      const headEl = document.querySelector(".heads img");
+      const tailEl = document.querySelector(".tails img");
+
+      if (headEl && headImg) headEl.src = headImg;
+      if (tailEl && tailImg) tailEl.src = tailImg;
+
+      if (result) result.textContent = "Münze geändert!";
+
+      if (coin) {
+        coin.classList.add("glow");
+        setTimeout(() => coin.classList.remove("glow"), 800);
+      }
+    });
+  });
+
+  // Initial Stats
+  updateStats();
+</script>
+
+</body>
+</html>
