@@ -6,7 +6,11 @@
   <title>CoinFlip</title>
 
   <style>
-    :root { --size: 220px; --dur: 900ms; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+    :root {
+      --size: 220px;
+      --dur: 900ms;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    }
     * { box-sizing: border-box; }
     html, body { height: 100%; }
 
@@ -35,14 +39,12 @@
       align-items: center;
       user-select: none;
     }
-
     .logo-o {
-      width: 0.9em;
-      height: 0.9em;
+      width: 0.9em; height: 0.9em;
       margin: 0 -0.12em;
     }
 
-    /* MENÜ-BUTTON */
+    /* Menü Button */
     .menu-btn {
       position: absolute;
       top: 18px;
@@ -54,7 +56,7 @@
       user-select: none;
     }
 
-    /* SIDE MENU */
+    /* Side Menu */
     .side-menu {
       position: fixed;
       top: 0;
@@ -76,16 +78,21 @@
       cursor: pointer;
       color: #eaecef;
       border-bottom: 1px solid #30363d;
-      transition: background 0.2s;
+      transition: background .2s;
     }
     .side-menu li:hover { background: #1f2329; }
 
-    /* PAGES */
+    /* Page System */
     .page { display: none; }
     .page.active { display: block; }
 
-    /* FLIP-BÜHNE */
-    .wrap { perspective: 1200px; height: var(--size); margin: 18px auto; }
+    /* Flip Bühne */
+    .wrap {
+      perspective: 1200px;
+      height: var(--size);
+      margin: 18px auto;
+    }
+
     .coin {
       position: relative;
       width: var(--size); height: var(--size);
@@ -103,8 +110,8 @@
       transform-style: preserve-3d;
     }
 
-    .heads  { transform: rotateY(0deg); }
-    .tails  { transform: rotateY(180deg); }
+    .heads { transform: rotateY(0deg); }
+    .tails { transform: rotateY(180deg); }
 
     .face img {
       width: 100%; height: 100%;
@@ -112,11 +119,34 @@
       backface-visibility: hidden;
     }
 
-    /* UI */
-    .btn { background:#1f6feb; border:none; padding:12px 18px; border-radius:14px; color:#fff; font-weight:700; cursor:pointer; }
-    .pill{ display:inline-block; margin-left:10px; padding:8px 12px; border-radius:999px; background:#161b22; border:1px solid #30363d; }
+    /* Shadow */
+    .shadow {
+      width: 120px;
+      height: 18px;
+      background: radial-gradient(ellipse at center, rgba(0,0,0,0.4), transparent 70%);
+      border-radius: 50%;
+      margin: 0 auto;
+      opacity: 0.6;
+      filter: blur(2px);
+      transform: scale(1);
+      transition: transform 0.3s, opacity 0.3s;
+    }
 
-    /* CUSTOMIZE GRID */
+    .shadow.small {
+      transform: scale(0.7);
+      opacity: 0.3;
+    }
+
+    /* Coin Jump Animation */
+    @keyframes coinJump {
+      0%   { transform: translateY(0) scale(1) rotateY(0deg); }
+      25%  { transform: translateY(-180px) scale(1.2) rotateY(540deg); }
+      50%  { transform: translateY(-220px) scale(1.3) rotateY(1080deg); }
+      75%  { transform: translateY(-100px) scale(1.1) rotateY(1620deg); }
+      100% { transform: translateY(0) scale(1) rotateY(1800deg); }
+    }
+
+    /* Customize Cards */
     .coin-selector {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
@@ -136,9 +166,18 @@
 
     .coin-option:hover { background: #1f2329; }
 
-    .coin-option img {
-      width: 100%;
-      filter: drop-shadow(0 0 4px rgba(0,0,0,0.4));
+    .coin-preview {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .coin-preview img {
+      width: 48px;
+      height: 48px;
+      object-fit: contain;
+      border-radius: 50%;
     }
 
     footer {
@@ -153,10 +192,10 @@
 <body>
 <div class="app">
 
-  <!-- Menü Button -->
+  <!-- MENU -->
   <div id="menuBtn" class="menu-btn">☰</div>
 
-  <!-- Logo -->
+  <!-- LOGO -->
   <h1 class="logo">
     C<img src="coins/coin-o.png" class="logo-o">INFLIP
   </h1>
@@ -171,56 +210,64 @@
     </ul>
   </nav>
 
-  <!-- PAGE 1 – FLIP -->
+  <!-- PAGE: FLIP -->
   <section id="page-flip" class="page active">
     <div class="wrap">
       <div id="coin" class="coin">
-        <div class="face heads">
-          <img src="coins/coin-head.png">
-        </div>
-        <div class="face tails">
-          <img src="coins/coin-tail.png">
-        </div>
+        <div class="face heads"><img src="coins/coin-head.png"></div>
+        <div class="face tails"><img src="coins/coin-tail.png"></div>
       </div>
     </div>
+
+    <div class="shadow" id="coinShadow"></div>
 
     <button id="flipBtn" class="btn">Flip</button>
     <span id="result" class="pill">Bereit</span>
   </section>
 
-  <!-- PAGE 2 – CUSTOMIZE -->
+  <!-- PAGE: CUSTOMIZE -->
   <section id="page-custom" class="page">
     <h2>Customize your Coin</h2>
     <p>Wähle deinen Coin:</p>
 
     <div class="coin-selector">
 
-      <!-- OG Coin -->
+      <!-- OG COIN -->
       <div class="coin-option"
-        data-head="coins/coin-head.png"
-        data-tail="coins/coin-tail.png">
-        <img src="coins/coin-head.png">
+           data-head="coins/coin-head.png"
+           data-tail="coins/coin-tail.png">
+
+        <div class="coin-preview">
+          <img src="coins/coin-head.png">
+          <img src="coins/coin-tail.png">
+        </div>
+
         <span>The OG Coin</span>
       </div>
 
-      <!-- Red & Blue (Platzhalter) -->
+      <!-- RED & BLUE COIN (Platzhalter) -->
       <div class="coin-option"
-        data-head="coins/coin-head-red.png"
-        data-tail="coins/coin-tail-blue.png">
-        <img src="coins/coin-head-red.png">
+           data-head="coins/coin-head-red.png"
+           data-tail="coins/coin-tail-blue.png">
+
+        <div class="coin-preview">
+          <img src="coins/coin-head-red.png">
+          <img src="coins/coin-tail-blue.png">
+        </div>
+
         <span>Red & Blue</span>
       </div>
 
     </div>
   </section>
 
-  <!-- PAGE 3 – STATS -->
+  <!-- PAGE: STATS -->
   <section id="page-stats" class="page">
     <h2>Statistics</h2>
     <p>Bald verfügbar.</p>
   </section>
 
-  <!-- PAGE 4 – INFORMATION -->
+  <!-- PAGE: INFO -->
   <section id="page-info" class="page">
     <h2>Information</h2>
     <p>Hier kommen Infos zur App.</p>
@@ -233,14 +280,11 @@
 </div>
 
 <script>
-
   /* Menü */
+  const menuBtn = document.getElementById("menuBtn");
   const sideMenu = document.getElementById("sideMenu");
-  const menuBtn  = document.getElementById("menuBtn");
 
-  menuBtn.addEventListener("click", () => {
-    sideMenu.classList.toggle("open");
-  });
+  menuBtn.addEventListener("click", () => sideMenu.classList.toggle("open"));
 
   /* Page Switcher */
   const pages = document.querySelectorAll(".page");
@@ -253,40 +297,52 @@
     });
   });
 
-  /* Fairer Zufall */
+  /* Flip */
+  const coin = document.getElementById("coin");
+  const shadow = document.getElementById("coinShadow");
+  const result = document.getElementById("result");
+
+  let baseTurns = 0;
+  let isFlipping = false;
+
   function randBit(){
-    if (crypto?.getRandomValues){
-      const a = new Uint32Array(1);
-      crypto.getRandomValues(a);
-      return a[0] & 1;
-    }
-    return Math.random() < 0.5 ? 0 : 1;
+    const arr = new Uint32Array(1);
+    crypto.getRandomValues(arr);
+    return arr[0] & 1;
   }
 
-  const coin   = document.getElementById("coin");
-  const result = document.getElementById("result");
-  let baseTurns = 0;
-
   async function flip(){
+    if (isFlipping) return;
+    isFlipping = true;
+
     const spins = 4 + Math.floor(Math.random()*4);
     baseTurns += spins;
 
-    const bit = randBit(); // 0 Kopf, 1 Zahl
+    const bit = randBit();
     const deg = baseTurns * 360 + (bit ? 180 : 0);
 
-    coin.style.transform = `rotateY(${deg}deg)`;
     result.textContent = "…";
 
-    await new Promise(r => setTimeout(r, 900));
+    coin.style.animation = "coinJump 1.2s ease-out forwards";
+    shadow.classList.add("small");
+
+    coin.style.transition = "transform 1.2s cubic-bezier(.2,.7,.2,1)";
+    coin.style.transform = `rotateY(${deg}deg)`;
+
+    await new Promise(r=>setTimeout(r, 1200));
+
+    coin.style.animation = "";
+    shadow.classList.remove("small");
+
     result.textContent = bit ? "Zahl" : "Kopf";
+    isFlipping = false;
   }
 
   document.getElementById("flipBtn").addEventListener("click", flip);
 
-  /* Coin-Chooser */
+  /* Customize */
   document.querySelectorAll(".coin-option").forEach(opt => {
     opt.addEventListener("click", () => {
-
       const headImg = opt.getAttribute("data-head");
       const tailImg = opt.getAttribute("data-tail");
 
@@ -296,7 +352,7 @@
       result.textContent = "Münze geändert!";
     });
   });
-
 </script>
+
 </body>
 </html>
