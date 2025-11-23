@@ -1,9 +1,10 @@
-<<!doctype html>
+<!doctype html>
 <html lang="de">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>CoinFlip</title>
+
   <style>
     :root { --size: 220px; --dur: 1200ms; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
     * { box-sizing: border-box; }
@@ -11,17 +12,60 @@
     body {
       margin: 0;
       min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
       background: #0f1115;
       color: #eaecef;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
 
-    .app { text-align: center; width: min(520px, 94vw); }
+    .app { text-align: center; width: min(520px,94vw); margin-top: 60px; }
 
-    /* Logo mit Münz-O */
+    /* ---------------- Menü ---------------- */
+
+    .menu-btn {
+      position: fixed;
+      top: 18px;
+      left: 18px;
+      font-size: 28px;
+      cursor: pointer;
+      z-index: 1000;
+      color: #f8f9fa;
+      user-select: none;
+    }
+
+    .side-menu {
+      position: fixed;
+      top: 0;
+      left: -240px;
+      width: 240px;
+      height: 100vh;
+      background: #161b22;
+      border-right: 1px solid #30363d;
+      padding-top: 80px;
+      transition: left .35s ease;
+      z-index: 999;
+    }
+    .side-menu.open { left: 0; }
+
+    .side-menu ul { list-style: none; padding: 0; margin: 0; }
+    .side-menu li {
+      padding: 16px 24px;
+      font-size: 20px;
+      cursor: pointer;
+      color: #eaecef;
+      border-bottom: 1px solid #30363d;
+      transition: background .2s;
+    }
+    .side-menu li:hover { background:#1f2329; }
+
+    /* ---------------- Page Switcher ---------------- */
+
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* ---------------- Logo ---------------- */
+
     .logo {
       margin: 0 0 8px 0;
       font-size: 48px;
@@ -34,12 +78,15 @@
       gap: 0;
       user-select: none;
     }
-    .logo-o { width:.9em; height:.9em; vertical-align: middle; margin:0 -0.12em; display:inline-block; }
+    .logo-o {
+      width: 0.9em; height: 0.9em;
+      margin: 0 -0.12em;
+    }
 
-    /* Bühne */
+    /* ---------------- Coinflip Engine ---------------- */
+
     .wrap { perspective: 1200px; height: var(--size); margin: 18px auto; }
 
-    /* NEU: Motion-Wrapper übernimmt NUR Flugbahn */
     .motion{
       width: var(--size); height: var(--size);
       margin: 0 auto;
@@ -47,160 +94,224 @@
       will-change: transform;
     }
 
-    /* Münze: NUR Rotation */
     .coin{
-      position: relative;
       width: 100%; height: 100%;
-      transform-style: preserve-3d; -webkit-transform-style: preserve-3d;
+      position: relative;
+      transform-style: preserve-3d;
+      -webkit-transform-style: preserve-3d;
       transition: transform var(--dur) cubic-bezier(.2,.7,.2,1);
       will-change: transform;
     }
 
-    /* Seiten */
     .face{
-      position: absolute; inset: 0;
-      border-radius: 50%;
-      overflow: hidden;
-      backface-visibility: hidden; -webkit-backface-visibility: hidden;
-      transform-style: preserve-3d; transform: translateZ(0);
+      position:absolute; inset:0;
+      border-radius:50%;
+      overflow:hidden;
+      backface-visibility:hidden;
+      -webkit-backface-visibility:hidden;
+      transform: translateZ(0);
     }
-    .heads{ transform: rotateY(0deg) translateZ(0); }
-    .tails{ transform: rotateY(180deg) translateZ(0); }
+    .heads{ transform: rotateY(0deg); }
+    .tails{ transform: rotateY(180deg); }
 
-    .face img{
-      width: 100%; height: 100%; display:block; object-fit:contain;
-      backface-visibility: hidden; -webkit-backface-visibility: hidden;
-    }
+    .face img{ width:100%; height:100%; object-fit:contain; }
 
-    /* UI */
-    .btn { background:#1f6feb; border:none; padding:12px 18px; border-radius:14px; color:#fff; font-weight:700; cursor:pointer; }
-    .pill { display:inline-block; margin-left:10px; padding:8px 12px; border-radius:999px; background:#161b22; border:1px solid #30363d; font-size:14px; }
-
-    /* Footer */
-    footer { margin-top: 28px; font-size: 12px; color: #9aa4b2; opacity:.9; }
-
-    /* --- Flug-Animation nur auf .motion --- */
     @keyframes coinFlight {
-      0%   { transform: translateY(0)      scale(1);   }
+      0%   { transform: translateY(0) scale(1); }
       25%  { transform: translateY(-160px) scale(1.15); }
       50%  { transform: translateY(-220px) scale(1.3); }
       75%  { transform: translateY(-100px) scale(1.1); }
-      100% { transform: translateY(0)      scale(1);   }
+      100% { transform: translateY(0) scale(1); }
     }
-    .motion.jump { animation: coinFlight var(--dur) ease-out forwards; will-change: transform; }
+    .motion.jump { animation: coinFlight var(--dur) ease-out forwards; }
 
-    /* Schatten */
     .shadow{
       width:120px; height:18px;
       background: radial-gradient(ellipse at center, rgba(0,0,0,0.4), transparent 70%);
-      border-radius:50%; margin:0 auto;
-      opacity:.6; filter:blur(2px);
+      margin:0 auto;
+      border-radius:50%;
+      opacity:.6;
+      filter:blur(2px);
       transform:scale(1);
-      transition: transform .3s, opacity .3s;
-      will-change: transform, opacity;
+      transition:transform .3s, opacity .3s;
     }
     .shadow.small{ transform:scale(.7); opacity:.3; }
 
-    /* iOS/WebKit Stabilisierung */
-    @supports (-webkit-touch-callout: none) {
-      .wrap { -webkit-perspective: 1200px; perspective: 1200px; }
-      .coin { -webkit-transform-style: preserve-3d; transform-style: preserve-3d; }
-      .face, .face img { -webkit-backface-visibility: hidden; backface-visibility: hidden; }
+    .btn {
+      background:#1f6feb;
+      border:none;
+      padding:12px 18px;
+      border-radius:14px;
+      color:#fff;
+      font-weight:700;
+      cursor:pointer;
     }
-    /* Nur iOS: Rückseite gegenrotieren */
-    .ios .tails img { -webkit-transform: rotateY(180deg); transform: rotateY(180deg); }
+    .pill {
+      display:inline-block;
+      margin-left:10px;
+      padding:8px 12px;
+      border-radius:999px;
+      background:#161b22;
+      border:1px solid #30363d;
+      font-size:14px;
+    }
 
-    @media (prefers-reduced-motion: reduce){
-      .coin { transition-duration:0ms; }
-      .motion.jump { animation:none; }
-    }
+    footer{ margin-top:32px; color:#9aa4b2; font-size:12px; }
   </style>
 </head>
-<body>
-  <div class="app">
-    <h1 class="logo" aria-label="Coinflip">
-      C<img src="./coin-o.png" alt="Münze als O" class="logo-o">INFLIP
-    </h1>
 
-    <div class="wrap">
-      <!-- NEU: Motion-Wrapper -->
-      <div id="motion" class="motion">
-        <div id="coin" class="coin" aria-live="polite">
-          <div class="face heads" aria-label="Kopf">
-            <img src="./coin-head.png" alt="Kopf-Seite der Münze">
-          </div>
-          <div class="face tails" aria-label="Zahl">
-            <img src="./coin-tail.png" alt="Zahl-Seite der Münze">
-          </div>
+<body>
+
+<!-- Menü Button -->
+<div id="menuBtn" class="menu-btn">☰</div>
+
+<!-- Seitenmenü -->
+<nav id="sideMenu" class="side-menu">
+  <ul>
+    <li data-page="flip">Flip the Coin</li>
+    <li data-page="custom">Customize your Coin</li>
+    <li data-page="stats">Statistics</li>
+    <li data-page="info">Information</li>
+  </ul>
+</nav>
+
+<div class="app">
+
+<!-- ======================================================= -->
+<!--                    PAGE 1 – FLIP PAGE                   -->
+<!-- ======================================================= -->
+<section id="page-flip" class="page active">
+
+  <h1 class="logo">
+    C<img src="./coin-o.png" class="logo-o">INFLIP
+  </h1>
+
+  <div class="wrap">
+    <div id="motion" class="motion">
+      <div id="coin" class="coin">
+
+        <div class="face heads">
+          <img src="./coin-head.png" alt="Kopf">
         </div>
+
+        <div class="face tails">
+          <img src="./coin-tail.png" alt="Zahl">
+        </div>
+
       </div>
     </div>
-
-    <div class="shadow" id="coinShadow"></div>
-
-    <button id="flipBtn" class="btn">Flip</button>
-    <span id="result" class="pill">Bereit</span>
-
-    <footer>
-      © 2025 Coinflip · Private Hobby-Website – keine geschäftsmäßige Nutzung, keine Werbung, kein Tracking.
-    </footer>
   </div>
 
-  <script>
-    // iOS erkennen
-    (function(){
-      const ua = navigator.userAgent || navigator.vendor || window.opera;
-      if (/iPad|iPhone|iPod/.test(ua)) {
-        document.documentElement.classList.add('ios');
-        document.body.classList.add('ios');
-      }
-    })();
+  <div class="shadow" id="coinShadow"></div>
 
-    function randBit(){
-      if (window.crypto?.getRandomValues){
-        const a = new Uint32Array(1); crypto.getRandomValues(a);
-        return a[0] & 1;
-      }
-      return Math.random() < 0.5 ? 0 : 1;
-    }
+  <button id="flipBtn" class="btn">Flip</button>
+  <span id="result" class="pill">Bereit</span>
 
-    const motion = document.getElementById('motion');
-    const coin   = document.getElementById('coin');
-    const result = document.getElementById('result');
-    const shadow = document.getElementById('coinShadow');
+</section>
 
-    let baseTurns = 0;
-    let isFlipping = false;
+<!-- ======================================================= -->
+<!--                  PAGE 2 – CUSTOM PAGE                   -->
+<!-- ======================================================= -->
+<section id="page-custom" class="page">
+  <h2>Customize your Coin</h2>
+  <p>Bald kannst du hier deine eigene Münze hochladen.</p>
+</section>
 
-    async function flip(){
-      if (isFlipping) return;
-      isFlipping = true;
+<!-- ======================================================= -->
+<!--                  PAGE 3 – STATISTICS PAGE               -->
+<!-- ======================================================= -->
+<section id="page-stats" class="page">
+  <h2>Statistics</h2>
+  <p>Noch keine Daten gespeichert.</p>
+</section>
 
-      const spins = 4 + Math.floor(Math.random()*4);
-      baseTurns += spins;
-      const bit = randBit(); // 0 = Kopf, 1 = Zahl
-      const deg = baseTurns * 360 + (bit ? 180 : 0); // 0° Kopf, 180° Zahl
+<!-- ======================================================= -->
+<!--                   PAGE 4 – INFO PAGE                    -->
+<!-- ======================================================= -->
+<section id="page-info" class="page">
+  <h2>Information</h2>
+  <p>Infos zu Coinflip kommen später.</p>
+</section>
 
-      // 1) Rotation zuerst setzen
-      result.textContent = '…';
-      coin.style.transform = `rotateY(${deg}deg)`;
+<footer>
+  © 2025 Coinflip · Private Hobby-Website – keine geschäftsmäßige Nutzung, keine Werbung, kein Tracking.
+</footer>
 
-      // 2) Reflow forcen und Flug zeitgleich starten
-      void coin.offsetWidth;
-      shadow.classList.add('small');
-      motion.classList.add('jump');
+</div>
 
-      // 3) Warten bis Flug fertig
-      await new Promise(r => setTimeout(r, parseInt(getComputedStyle(document.documentElement).getPropertyValue('--dur')) || 1200));
+<script>
+/* ------- iOS Fix ------- */
+(function(){
+  const ua = navigator.userAgent || navigator.vendor || window.opera;
+  if (/iPad|iPhone|iPod/.test(ua)){
+    document.documentElement.classList.add("ios");
+  }
+})();
 
-      // 4) Aufräumen & Ergebnis
-      motion.classList.remove('jump');
-      shadow.classList.remove('small');
-      result.textContent = bit ? 'Zahl' : 'Kopf';
-      isFlipping = false;
-    }
+/* ------- Menü ------- */
+const menuBtn = document.getElementById("menuBtn");
+const sideMenu = document.getElementById("sideMenu");
 
-    document.getElementById('flipBtn').addEventListener('click', flip);
-  </script>
+menuBtn.addEventListener("click", () => {
+  sideMenu.classList.toggle("open");
+});
+
+/* ------- Page Switcher ------- */
+const pages = document.querySelectorAll(".page");
+document.querySelectorAll(".side-menu li").forEach(item => {
+  item.addEventListener("click", () => {
+    const target = item.getAttribute("data-page");
+    pages.forEach(p => p.classList.remove("active"));
+    document.getElementById("page-" + target).classList.add("active");
+    sideMenu.classList.remove("open");
+  });
+});
+
+/* ------- Zufall ------- */
+function randBit(){
+  const a = new Uint32Array(1);
+  crypto.getRandomValues(a);
+  return a[0] & 1;
+}
+
+/* ------- Coinflip Animation ------- */
+const motion = document.getElementById("motion");
+const coin   = document.getElementById("coin");
+const shadow = document.getElementById("coinShadow");
+const result = document.getElementById("result");
+
+let baseTurns = 0;
+let isFlipping = false;
+
+async function flip(){
+  if (isFlipping) return;
+  isFlipping = true;
+
+  const spins = 4 + Math.floor(Math.random()*4);
+  baseTurns += spins;
+
+  const bit = randBit();
+  const deg = baseTurns * 360 + (bit ? 180 : 0);
+
+  result.textContent = "…";
+
+  coin.style.transform = `rotateY(${deg}deg)`;
+  void coin.offsetWidth;
+
+  motion.classList.add("jump");
+  shadow.classList.add("small");
+
+  await new Promise(r => setTimeout(r, 1200));
+
+  motion.classList.remove("jump");
+  shadow.classList.remove("small");
+
+  result.textContent = bit ? "Zahl" : "Kopf";
+  isFlipping = false;
+}
+
+document.getElementById("flipBtn").addEventListener("click", flip);
+</script>
+
 </body>
 </html>
