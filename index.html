@@ -93,6 +93,15 @@
       margin: 18px auto;
     }
 
+    /* NEU: Motion-Wrapper für Flug (Jump) */
+    .motion {
+      width: var(--size);
+      height: var(--size);
+      margin: 0 auto;
+      transform: translateY(0) scale(1);
+      will-change: transform;
+    }
+
     .coin {
       position: relative;
       width: var(--size); height: var(--size);
@@ -137,13 +146,13 @@
       opacity: 0.3;
     }
 
-    /* Coin Jump Animation */
+    /* Coin Jump Animation – NUR Flug, keine Rotation */
     @keyframes coinJump {
-      0%   { transform: translateY(0) scale(1) rotateY(0deg); }
-      25%  { transform: translateY(-180px) scale(1.2) rotateY(540deg); }
-      50%  { transform: translateY(-220px) scale(1.3) rotateY(1080deg); }
-      75%  { transform: translateY(-100px) scale(1.1) rotateY(1620deg); }
-      100% { transform: translateY(0) scale(1) rotateY(1800deg); }
+      0%   { transform: translateY(0) scale(1); }
+      25%  { transform: translateY(-180px) scale(1.2); }
+      50%  { transform: translateY(-220px) scale(1.3); }
+      75%  { transform: translateY(-100px) scale(1.1); }
+      100% { transform: translateY(0) scale(1); }
     }
 
     /* Glow beim Coin-Wechsel */
@@ -281,9 +290,12 @@
   <!-- PAGE: FLIP -->
   <section id="page-flip" class="page active">
     <div class="wrap">
-      <div id="coin" class="coin">
-        <div class="face heads"><img src="coins/coin-head.png" alt="Kopf"></div>
-        <div class="face tails"><img src="coins/coin-tail.png" alt="Zahl"></div>
+      <!-- NEU: Motion-Wrapper um die Münze -->
+      <div id="motion" class="motion">
+        <div id="coin" class="coin">
+          <div class="face heads"><img src="coins/coin-head.png" alt="Kopf"></div>
+          <div class="face tails"><img src="coins/coin-tail.png" alt="Zahl"></div>
+        </div>
       </div>
     </div>
 
@@ -393,6 +405,7 @@
   });
 
   /* Flip-Setup */
+  const motion    = document.getElementById("motion");   // NEU
   const coin      = document.getElementById("coin");
   const shadow    = document.getElementById("coinShadow");
   const result    = document.getElementById("result");
@@ -445,15 +458,21 @@
       } catch(e) {}
     }
 
-    // Jump + Drehung
-    coin.style.animation  = "coinJump 1.2s ease-out forwards";
+    // Flug-Animation auf dem Motion-Wrapper
+    if (motion) {
+      motion.style.animation  = "coinJump 1.2s ease-out forwards";
+    }
     shadow.classList.add("small");
+
+    // Drehung nur auf der Coin
     coin.style.transition = "transform 1.2s cubic-bezier(.2,.7,.2,1)";
     coin.style.transform  = `rotateY(${deg}deg)`;
 
     await new Promise(r=>setTimeout(r, 1200));
 
-    coin.style.animation = "";
+    if (motion) {
+      motion.style.animation = "";
+    }
     shadow.classList.remove("small");
 
     // Stats
