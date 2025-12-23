@@ -93,7 +93,7 @@
       margin: 18px auto;
     }
 
-    /* NEU: Motion-Wrapper für Flug (Jump) */
+    /* Motion-Wrapper für Flug (Jump) */
     .motion {
       width: var(--size);
       height: var(--size);
@@ -200,6 +200,7 @@
       height: 48px;
       object-fit: contain;
       border-radius: 50%;
+      cursor: pointer;
     }
 
     /* Buttons & Pills */
@@ -263,6 +264,75 @@
       transform: rotateY(180deg);
       -webkit-transform: rotateY(180deg);
     }
+
+    /* =========================
+       NEU: Modal für große Ansicht
+       ========================= */
+    .modal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      place-items: center;
+      background: rgba(0,0,0,.65);
+      z-index: 2000;
+      padding: 18px;
+    }
+    .modal.open { display: grid; }
+
+    .modal-card {
+      width: min(920px, 96vw);
+      background: #0f1115;
+      border: 1px solid #30363d;
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 20px 80px rgba(0,0,0,.55);
+      position: relative;
+    }
+    .modal-close {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      border: 1px solid #30363d;
+      background: #161b22;
+      color: #eaecef;
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .modal-title {
+      margin: 6px 0 14px 0;
+      font-size: 18px;
+      color: #eaecef;
+    }
+    .modal-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    @media (max-width: 680px) {
+      .modal-grid { grid-template-columns: 1fr; }
+    }
+    .modal-side {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 14px;
+      padding: 12px;
+    }
+    .modal-side h3 {
+      margin: 0 0 10px 0;
+      font-size: 14px;
+      color: #9aa4b2;
+      font-weight: 600;
+      letter-spacing: .2px;
+    }
+    .modal-side img {
+      width: 100%;
+      max-height: 420px;
+      object-fit: contain;
+      display: block;
+      margin: 0 auto;
+    }
   </style>
 </head>
 
@@ -290,7 +360,6 @@
   <!-- PAGE: FLIP -->
   <section id="page-flip" class="page active">
     <div class="wrap">
-      <!-- NEU: Motion-Wrapper um die Münze -->
       <div id="motion" class="motion">
         <div id="coin" class="coin">
           <div class="face heads"><img src="coins/coin-head.png" alt="Kopf"></div>
@@ -323,7 +392,7 @@
         <span>The OG Coin</span>
       </div>
 
-      <!-- RED & BLUE COIN (Platzhalter, Bilder später einfügen) -->
+      <!-- RED & BLUE COIN -->
       <div class="coin-option"
            data-head="coins/coin-head-red.png"
            data-tail="coins/coin-tail-blue.png">
@@ -335,6 +404,10 @@
       </div>
 
     </div>
+
+    <p style="margin-top:14px; color:#9aa4b2; font-size:13px;">
+      Tipp: Klick auf die Vorschau, um Vorder- & Rückseite groß zu sehen.
+    </p>
   </section>
 
   <!-- PAGE: STATS -->
@@ -372,7 +445,25 @@
 
 </div>
 
-<!-- Soundeffekt (optional – Datei in /sounds/coin-flip.mp3 legen) -->
+<!-- NEU: Modal -->
+<div id="coinModal" class="modal" aria-hidden="true">
+  <div class="modal-card" role="dialog" aria-modal="true" aria-label="Coin Vorschau">
+    <button id="modalClose" class="modal-close">✕</button>
+    <div id="modalTitle" class="modal-title">Coin Vorschau</div>
+    <div class="modal-grid">
+      <div class="modal-side">
+        <h3>Vorderseite (Kopf)</h3>
+        <img id="modalHead" src="" alt="Vorderseite groß">
+      </div>
+      <div class="modal-side">
+        <h3>Rückseite (Zahl)</h3>
+        <img id="modalTail" src="" alt="Rückseite groß">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Soundeffekt -->
 <audio id="coinSound" src="sounds/coin-flip.mp3" preload="auto"></audio>
 
 <script>
@@ -405,7 +496,7 @@
   });
 
   /* Flip-Setup */
-  const motion    = document.getElementById("motion");   // NEU
+  const motion    = document.getElementById("motion");
   const coin      = document.getElementById("coin");
   const shadow    = document.getElementById("coinShadow");
   const result    = document.getElementById("result");
@@ -450,7 +541,6 @@
 
     result.textContent = "…";
 
-    // Sound (falls Datei fehlt oder Browser blockt → einfach ignorieren)
     if (coinSound) {
       try {
         coinSound.currentTime = 0;
@@ -458,13 +548,11 @@
       } catch(e) {}
     }
 
-    // Flug-Animation auf dem Motion-Wrapper
     if (motion) {
       motion.style.animation  = "coinJump 1.2s ease-out forwards";
     }
     shadow.classList.add("small");
 
-    // Drehung nur auf der Coin
     coin.style.transition = "transform 1.2s cubic-bezier(.2,.7,.2,1)";
     coin.style.transform  = `rotateY(${deg}deg)`;
 
@@ -475,7 +563,6 @@
     }
     shadow.classList.remove("small");
 
-    // Stats
     totalFlips++;
     if (bit === 0) headsCount++; else tailsCount++;
     updateStats();
@@ -489,7 +576,6 @@
     flipBtn.addEventListener("click", flip);
   }
 
-  /* Reset Stats */
   if (resetStatsBtn) {
     resetStatsBtn.addEventListener("click", () => {
       totalFlips = 0;
@@ -500,7 +586,7 @@
     });
   }
 
-  /* Customize – Coin-Wechsel mit Glow */
+  /* Customize – Coin-Wechsel + Glow */
   document.querySelectorAll(".coin-option").forEach(opt => {
     opt.addEventListener("click", () => {
       const headImg = opt.getAttribute("data-head");
@@ -521,7 +607,63 @@
     });
   });
 
-  // Initial Stats
+  /* =========================
+     NEU: Modal Logik
+     ========================= */
+  const coinModal  = document.getElementById("coinModal");
+  const modalClose = document.getElementById("modalClose");
+  const modalHead  = document.getElementById("modalHead");
+  const modalTail  = document.getElementById("modalTail");
+  const modalTitle = document.getElementById("modalTitle");
+
+  function openModal(headSrc, tailSrc, titleText){
+    if (!coinModal || !modalHead || !modalTail) return;
+    modalHead.src = headSrc;
+    modalTail.src = tailSrc;
+    if (modalTitle) modalTitle.textContent = titleText || "Coin Vorschau";
+    coinModal.classList.add("open");
+    coinModal.setAttribute("aria-hidden", "false");
+  }
+  function closeModal(){
+    if (!coinModal) return;
+    coinModal.classList.remove("open");
+    coinModal.setAttribute("aria-hidden", "true");
+  }
+
+  // Klick auf Coin-Option oder Preview öffnet Modal
+  document.querySelectorAll(".coin-option").forEach(opt => {
+    const headSrc = opt.getAttribute("data-head");
+    const tailSrc = opt.getAttribute("data-tail");
+    const label   = (opt.querySelector("span")?.textContent || "Coin").trim();
+
+    // Klick auf ganze Karte
+    opt.addEventListener("dblclick", () => {
+      openModal(headSrc, tailSrc, label);
+    });
+
+    // Klick auf Preview-Bilder
+    opt.querySelectorAll(".coin-preview img").forEach(img => {
+      img.addEventListener("click", (e) => {
+        e.stopPropagation();
+        openModal(headSrc, tailSrc, label);
+      });
+    });
+  });
+
+  if (modalClose) modalClose.addEventListener("click", closeModal);
+
+  // Klick auf Hintergrund schließt
+  if (coinModal) {
+    coinModal.addEventListener("click", (e) => {
+      if (e.target === coinModal) closeModal();
+    });
+  }
+
+  // ESC schließt
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeModal();
+  });
+
   updateStats();
 </script>
 
