@@ -5,12 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>CoinFlip</title>
   <meta name="description" content="CoinFlip – realistische Münzwurf-Website mit Animationen. Wirf eine Münze online: Kopf oder Zahl. Kostenlos, ohne Tracking.">
-
-<meta name="keywords" content="coinflip, münzwurf, kopf oder zahl, coin toss, münze werfen online">
-
-<meta name="robots" content="index, follow">
-
-<link rel="canonical" href="https://marvindoescoinflip.github.io/coinflip/">
+  <meta name="keywords" content="coinflip, münzwurf, kopf oder zahl, coin toss, münze werfen online">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://marvindoescoinflip.github.io/coinflip/">
 
   <style>
     :root {
@@ -272,9 +269,7 @@
       -webkit-transform: rotateY(180deg);
     }
 
-    /* =========================
-       NEU: Modal für große Ansicht
-       ========================= */
+    /* Modal für große Ansicht */
     .modal {
       position: fixed;
       inset: 0;
@@ -452,7 +447,7 @@
 
 </div>
 
-<!-- NEU: Modal -->
+<!-- Modal -->
 <div id="coinModal" class="modal" aria-hidden="true">
   <div class="modal-card" role="dialog" aria-modal="true" aria-label="Coin Vorschau">
     <button id="modalClose" class="modal-close">✕</button>
@@ -511,6 +506,9 @@
 
   let baseTurns   = 0;
   let isFlipping  = false;
+
+  /* ✅ NEU: merkt sich, welche Münze aktiv ist */
+  let currentCoinType = "og"; // "og" oder "redblue"
 
   let totalFlips  = 0;
   let headsCount  = 0;
@@ -574,7 +572,13 @@
     if (bit === 0) headsCount++; else tailsCount++;
     updateStats();
 
-    result.textContent = bit ? "Zahl" : "Kopf";
+    /* ✅ NEU: Ergebnis-Text je nach Coin */
+    if (currentCoinType === "redblue") {
+      result.textContent = bit ? "Blau" : "Rot";
+    } else {
+      result.textContent = bit ? "Zahl" : "Kopf";
+    }
+
     isFlipping = false;
   }
 
@@ -599,6 +603,13 @@
       const headImg = opt.getAttribute("data-head");
       const tailImg = opt.getAttribute("data-tail");
 
+      /* ✅ NEU: Coin-Typ setzen */
+      if (headImg && headImg.includes("coin-head-red")) {
+        currentCoinType = "redblue";
+      } else {
+        currentCoinType = "og";
+      }
+
       const headEl = document.querySelector(".heads img");
       const tailEl = document.querySelector(".tails img");
 
@@ -614,9 +625,7 @@
     });
   });
 
-  /* =========================
-     NEU: Modal Logik
-     ========================= */
+  /* Modal Logik */
   const coinModal  = document.getElementById("coinModal");
   const modalClose = document.getElementById("modalClose");
   const modalHead  = document.getElementById("modalHead");
@@ -637,18 +646,15 @@
     coinModal.setAttribute("aria-hidden", "true");
   }
 
-  // Klick auf Coin-Option oder Preview öffnet Modal
   document.querySelectorAll(".coin-option").forEach(opt => {
     const headSrc = opt.getAttribute("data-head");
     const tailSrc = opt.getAttribute("data-tail");
     const label   = (opt.querySelector("span")?.textContent || "Coin").trim();
 
-    // Klick auf ganze Karte
     opt.addEventListener("dblclick", () => {
       openModal(headSrc, tailSrc, label);
     });
 
-    // Klick auf Preview-Bilder
     opt.querySelectorAll(".coin-preview img").forEach(img => {
       img.addEventListener("click", (e) => {
         e.stopPropagation();
@@ -659,14 +665,12 @@
 
   if (modalClose) modalClose.addEventListener("click", closeModal);
 
-  // Klick auf Hintergrund schließt
   if (coinModal) {
     coinModal.addEventListener("click", (e) => {
       if (e.target === coinModal) closeModal();
     });
   }
 
-  // ESC schließt
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") closeModal();
   });
